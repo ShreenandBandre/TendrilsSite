@@ -1,0 +1,9 @@
+export { default as ServiceHero } from "./ServiceHero";
+export { default as EditorialHero } from "./EditorialHero";
+export { default as SystemsHero } from "./SystemsHero";
+export { default as InnovationHero } from "./InnovationHero";
+export { default as GrowthHero } from "./GrowthHero";
+export { default as JourneyHero } from "./JourneyHero";
+export { default as HeroButtons } from "./HeroButtons";
+export { default as HeroImage } from "./HeroImage";
+export { default as HeroBackground } from "./HeroBackground";

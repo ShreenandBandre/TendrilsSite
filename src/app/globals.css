@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { scroll-behavior: smooth; }
+
+body {
+background-color: #FAF7EF;
+color: #0B0B0C;
+}
+
+::selection { background: #C9A227; color: #0B0B0C; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #F3EEE0; }
+::-webkit-scrollbar-thumb {
+background: linear-gradient(180deg, #C9A227, #8C6D14);
+border-radius: 999px;
+}
+
+.gold-text {
+background: linear-gradient(120deg, #8C6D14, #C9A227, #F4E5B2, #C9A227);
+background-size: 200% auto;
+-webkit-background-clip: text;
+background-clip: text;
+color: transparent;
+animation: shimmer 6s linear infinite;
+}

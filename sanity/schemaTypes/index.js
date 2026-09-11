@@ -1,0 +1,14 @@
+import seo from "./objects/seo";
+import cta from "./objects/cta";
+import { contentSectionTypes } from "./objects/contentSections";
+import service from "./service";
+import industry from "./industry";
+import solution from "./solution";
+import caseStudy from "./caseStudy";
+import testimonial from "./testimonial";
+import page from "./page";
+import aboutPage from "./aboutPage";
+import siteSettings from "./siteSettings";
+import statItem from "./statBlock";
+import homepage from "./homepage";
+export const schemaTypes = [seo, cta, ...contentSectionTypes, service, industry, solution, caseStudy, testimonial, page, aboutPage, siteSettings, statItem, homepage];
