@@ -26,7 +26,12 @@ export default function ReelsScrollWrapper({ children }) {
         // Natural height rakho, stretching remove kar di
         el.style.scrollSnapAlign = isFooter ? "end" : "start";
         el.style.scrollSnapStop = "normal";
-        el.style.scrollMarginTop = "0px";
+        // Offset so a section's top content never lands behind the fixed floating navbar.
+        el.style.scrollMarginTop = "120px";
+        if (!isFooter) {
+          const currentPad = parseFloat(getComputedStyle(el).paddingTop) || 0;
+          if (currentPad < 120) el.style.paddingTop = "120px";
+        }
 
         // Agar purana min-h-screen class laga ho toh nikaal do
         el.classList.remove("min-h-screen");
@@ -35,10 +40,12 @@ export default function ReelsScrollWrapper({ children }) {
           const eyebrow = el.querySelector("p")?.innerText?.trim();
           const heading = el.querySelector("h1, h2, h3")?.innerText?.trim();
 
+          const rawLabel = eyebrow || heading || `0${detected.length + 1}`;
           detected.push({
             id: el.id,
             index: i,
-            label: eyebrow || heading?.slice(0, 18) || `0${detected.length + 1}`,
+            label:
+              rawLabel.length > 22 ? `${rawLabel.slice(0, 22)}…` : rawLabel,
           });
         }
       });
@@ -99,7 +106,7 @@ export default function ReelsScrollWrapper({ children }) {
 
       {/* Floating Reels Dots Indicator */}
       {sections.length > 1 && (
-        <aside className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 p-2.5 rounded-full bg-black/30 backdrop-blur-lg border border-white/20 shadow-2xl">
+        <aside className="fixed right-6 top-1/2 -translate-y-1/2 z-50 hidden flex-col items-center gap-3 p-2.5 rounded-full bg-black/30 backdrop-blur-lg border border-white/20 shadow-2xl lg:flex">
           {sections.map((sec) => {
             const isActive = activeIndex === sec.index;
             return (

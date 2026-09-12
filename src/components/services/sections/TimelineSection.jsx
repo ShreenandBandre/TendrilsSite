@@ -207,7 +207,7 @@ export default function TimelineSection({ section }) {
                       Card + Image below it
                      ========================================= */}
 
-                  <div className="min-w-0 pl-0 md:hidden">
+                  <div className="col-start-2 min-w-0 pl-0 md:col-auto md:hidden">
                     <TimelineCard
                       step={step}
                       number={number}
