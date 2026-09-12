@@ -52,7 +52,7 @@ export default function DottedWorldHero({ stats = [], hero = {}, logo, logoAlt =
 
   return (
     <section ref={ref} className="relative h-[250vh] bg-ivory">
-      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden px-6">
+      <div className="sticky top-0 flex h-dvh w-full flex-col items-center justify-center overflow-hidden px-6">
         
         {/* World Map Background — fixed to always fully cover the hero on
             every screen size (see mapSvg comment above for why explicit
