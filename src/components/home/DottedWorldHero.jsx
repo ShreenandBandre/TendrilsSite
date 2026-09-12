@@ -30,7 +30,7 @@ export default function DottedWorldHero({ stats = [], hero = {}, logo, logoAlt =
   return (
     <>
       {/* ================= MOBILE: static, no scroll-jack ================= */}
-      <section className="sm:hidden relative bg-ivory pt-28 pb-10 px-6 flex flex-col items-center text-center overflow-hidden">
+      <section className="sm:hidden relative bg-ivory pt-24 pb-4 px-6 flex flex-col items-center text-center overflow-hidden">
         <div
           className="absolute inset-0 opacity-[0.15] pointer-events-none [&_svg]:w-full [&_svg]:h-full"
           dangerouslySetInnerHTML={{ __html: mapSvg }}
@@ -59,9 +59,7 @@ export default function DottedWorldHero({ stats = [], hero = {}, logo, logoAlt =
             ))}
           </div>
 
-          <div className="mt-10">
-            <PartnersMarquee data={partnersMarquee} />
-          </div>
+          <PartnersMarquee data={partnersMarquee} />
         </div>
       </section>
 
