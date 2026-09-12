@@ -2,12 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-html { scroll-behavior: smooth; overflow-x: hidden; }
+html { scroll-behavior: smooth; }
 
 body {
 background-color: #FAF7EF;
 color: #0B0B0C;
-overflow-x: hidden;
 -webkit-text-size-adjust: 100%;
 }
 
