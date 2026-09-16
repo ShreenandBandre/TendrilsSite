@@ -23,8 +23,9 @@
     "framer-motion": "^11.18.2",
     "lenis": "1.1.14",
     "lucide-react": "0.454.0",
-    "next": "14.2.15",
+    "next": "^14.2.35",
     "next-sanity": "9.4.4",
+    "nodemailer": "^6.9.14",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hook-form": "7.53.0",
@@ -32,8 +33,7 @@
     "three": "^0.185.1",
     "three-globe": "^2.45.2",
     "zod": "3.23.8",
-    "zustand": "4.5.5",
-    "nodemailer": "^6.9.14"
+    "zustand": "4.5.5"
   },
   "devDependencies": {
     "autoprefixer": "10.4.20",
