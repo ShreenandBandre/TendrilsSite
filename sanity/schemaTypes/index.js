@@ -11,4 +11,5 @@ import aboutPage from "./aboutPage";
 import siteSettings from "./siteSettings";
 import statItem from "./statBlock";
 import homepage from "./homepage";
-export const schemaTypes = [seo, cta, ...contentSectionTypes, service, industry, solution, caseStudy, testimonial, page, aboutPage, siteSettings, statItem, homepage];
+import vendor from "./vendor";
+export const schemaTypes = [seo, cta, ...contentSectionTypes, service, industry, solution, caseStudy, testimonial, page, aboutPage, siteSettings, statItem, homepage, vendor];

@@ -25,7 +25,7 @@ export default function ExpertiseSection({ expertise }) {
   const items = data?.items?.length > 0 ? data.items : fallbackExpertise.items;
 
   return (
-    <section className="relative w-full bg-[#030305] text-white py-24 md:py-40 selection:bg-amber-500/30">
+    <section className="relative w-full overflow-hidden bg-[#030305] text-white py-24 md:py-40 selection:bg-amber-500/30">
       {/* Subtle Background Glow */}
       <div className="pointer-events-none absolute top-0 left-0 h-[500px] w-[500px] rounded-full bg-amber-500/5 blur-[150px] mix-blend-screen" />
 

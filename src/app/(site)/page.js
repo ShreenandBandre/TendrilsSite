@@ -14,6 +14,7 @@ import IndustriesSection from "@/components/home/IndustriesSection";
 import SolutionsSection from "@/components/home/SolutionsSection";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 import DigitalMarketingGrid from "@/components/home/DigitalMarketingGrid";
+import VendorsSection from "@/components/home/VendorsSection";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
 import Link from "next/link";
@@ -350,6 +351,12 @@ export default async function HomePage() {
         logoAlt={data?.siteSettings?.headerLogoAlt}
         partnersMarquee={partnersMarquee}
       />
+
+      {/* =================================================
+          VENDORS (right after hero)
+      ================================================= */}
+
+      <VendorsSection data={data?.vendorsSection} />
 
       {/* =================================================
           UNIVERSAL SECTIONS

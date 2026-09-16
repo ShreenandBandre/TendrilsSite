@@ -28,6 +28,17 @@ const pageReferenceProjection = `{
    HOMEPAGE
 ========================================================= */
 
+export const vendorsListQuery = groq`
+  *[_type == "vendor"] | order(order asc, name asc){
+    _id,
+    name,
+    category,
+    url,
+    "imageUrl": coalesce(logo.asset->url, logo.assetUrl),
+    logo ${imageProjection}
+  }
+`;
+
 export const homepageQuery = groq`
   *[_type == "homepage"][0]{
     title,
@@ -69,6 +80,17 @@ export const homepageQuery = groq`
       description,
       "imageUrl": coalesce(image.asset->url, asset->url),
       image ${imageProjection}
+    },
+
+    vendorsSection{
+      eyebrow,
+      title,
+      subtitle,
+      items[]->{
+        _id, name, category, url,
+        "imageUrl": coalesce(logo.asset->url, logo.assetUrl),
+        logo ${imageProjection}
+      }
     },
 
     "testimonials": coalesce(
@@ -1078,6 +1100,17 @@ export const aboutPageQuery = groq`
           logo.asset->url,
           image.asset->url
         )
+      }
+    },
+
+    vendorsSection{
+      eyebrow,
+      title,
+      subtitle,
+      items[]->{
+        _id, name, category, url,
+        "imageUrl": coalesce(logo.asset->url, logo.assetUrl),
+        logo ${imageProjection}
       }
     },
 

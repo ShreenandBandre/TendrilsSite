@@ -158,6 +158,28 @@ export default defineType({
     }),
 
     // ─────────────────────────────────────────────
+    // VENDORS SECTION (shown after hero, also on About)
+    // ─────────────────────────────────────────────
+    defineField({
+      name: "vendorsSection",
+      title: "Vendors Section",
+      description: "Shown right after the hero. Reuses the shared Vendor documents (also displayed on the About page).",
+      type: "object",
+      fields: [
+        defineField({ name: "eyebrow", title: "Eyebrow", type: "string", initialValue: "Our Ecosystem" }),
+        defineField({ name: "title", title: "Title", type: "string", initialValue: "Vendors we integrate with" }),
+        defineField({ name: "subtitle", title: "Subtitle", type: "text", rows: 2 }),
+        defineField({
+          name: "items",
+          title: "Featured Vendors",
+          type: "array",
+          validation: (rule) => rule.max(24),
+          of: [{ type: "reference", to: [{ type: "vendor" }] }],
+        }),
+      ],
+    }),
+
+    // ─────────────────────────────────────────────
     // FEATURED SERVICES
     // ─────────────────────────────────────────────
     defineField({
