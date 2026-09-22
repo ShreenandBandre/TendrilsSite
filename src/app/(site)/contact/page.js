@@ -97,7 +97,7 @@ export default function ContactPage() {
 
               {/* Email */}
               <a
-                href="mailto:contact@tendrils.io"
+                href="mailto:contact@tendrilsio.com"
                 className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1A1816]/80 p-4 transition-all duration-300 hover:border-[#C9A227]/60 hover:bg-[#1E1B18]"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#C9A227]/10 text-[#C9A227] group-hover:bg-[#C9A227] group-hover:text-[#121110] transition-colors">
@@ -110,7 +110,7 @@ export default function ContactPage() {
                   </p>
 
                   <p className="font-medium text-white truncate">
-                    contact@tendrils.io
+                    contact@tendrilsio.com
                   </p>
                 </div>
 
