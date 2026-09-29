@@ -2,21 +2,9 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import DottedMap from "dotted-map";
+import mapSvg from "@/lib/mapSvg";
 import MagneticButton from "@/components/ui/MagneticButton";
 import PartnersMarquee from "@/components/home/PartnersMarquee";
-
-const map = new DottedMap({ height: 60, grid: "diagonal" });
-const rawMapSvg = map.getSVG({
-  radius: 0.22,
-  color: "#C9A227",
-  shape: "circle",
-  backgroundColor: "transparent",
-});
-const mapSvg = rawMapSvg.replace(
-  "<svg ",
-  '<svg width="100%" height="100%" preserveAspectRatio="xMidYMid slice" '
-);
 
 const defaultStats = [
   { value: "250+", label: "Global Consultants" },

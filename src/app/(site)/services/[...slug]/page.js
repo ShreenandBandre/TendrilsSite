@@ -10,7 +10,7 @@ import {
 
 // Cache kill karo taaki Sanity ka content instant refresh ho
 // export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 /* =========================================================
    BUILD FULL SERVICE PATH
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }) {
     const service = await client.fetch(
       serviceBySlugQuery,
       { slug },
-      { cache: "no-store" }
+      { next: { revalidate: 60 } }
     );
     if (!service) return { title: "Service | Tendrils" };
 
@@ -85,11 +85,11 @@ export default async function ServicePage({ params }) {
   let service = null;
 
   try {
-    // Fresh fetch without cache
+    // Cached 60s; on-demand revalidation via /api/revalidate webhook
     service = await client.fetch(
       serviceBySlugQuery,
       { slug },
-      { cache: "no-store", next: { revalidate: 0 } }
+      { next: { revalidate: 60 } }
     );
   } catch (error) {
     console.warn(`Could not load service "${slug}" from Sanity:`, error?.message);

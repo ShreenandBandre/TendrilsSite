@@ -19,6 +19,13 @@
 			"service": "tendrils"
 		}
 	],
+	"r2_buckets": [
+		{
+			// Create with: npx wrangler r2 bucket create tendrils-next-cache
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "tendrils-next-cache"
+		}
+	],
 	"images": {
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image

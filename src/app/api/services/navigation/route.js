@@ -9,9 +9,10 @@ export async function GET() {
       servicesNavigationQuery
     );
 
-    return NextResponse.json({
-      services: services || [],
-    });
+    return NextResponse.json(
+      { services: services || [] },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } }
+    );
   } catch (error) {
     console.error(
       "Services navigation error:",

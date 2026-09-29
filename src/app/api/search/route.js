@@ -45,7 +45,7 @@ export async function GET(request) {
   try {
     const q = new URL(request.url).searchParams.get("q")?.trim();
 
-    if (!q) {
+    if (!q || q.length < 2) {
       return NextResponse.json({ results: [] });
     }
 
@@ -111,7 +111,10 @@ export async function GET(request) {
       .slice(0, 20)
       .map(({ _score, ...rest }) => rest);
 
-    return NextResponse.json({ results: flat });
+    return NextResponse.json(
+      { results: flat },
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } }
+    );
   } catch (error) {
     console.error("Search API error:", error);
     return NextResponse.json(

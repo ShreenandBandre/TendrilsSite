@@ -163,7 +163,7 @@ export default function FloatingNavbar({ settings: initialSettings = null }) {
 
     if (!servicesLoaded) {
       fetch("/api/services/navigation", {
-        cache: "no-store",
+        cache: "force-cache",
       })
         .then((r) => r.json())
         .then((data) => {
@@ -184,7 +184,7 @@ export default function FloatingNavbar({ settings: initialSettings = null }) {
 
     if (!industriesLoaded) {
       fetch("/api/industries/navigation", {
-        cache: "no-store",
+        cache: "force-cache",
       })
         .then((r) => r.json())
         .then((data) => {
@@ -205,7 +205,7 @@ export default function FloatingNavbar({ settings: initialSettings = null }) {
 
     if (!solutionsLoaded) {
       fetch("/api/solutions/navigation", {
-        cache: "no-store",
+        cache: "force-cache",
       })
         .then((r) => r.json())
         .then((data) => {
@@ -226,7 +226,7 @@ export default function FloatingNavbar({ settings: initialSettings = null }) {
 
     if (!caseStudiesLoaded) {
       fetch("/api/case-studies/navigation", {
-        cache: "no-store",
+        cache: "force-cache",
       })
         .then((r) => r.json())
         .then((data) => {

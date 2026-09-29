@@ -65,7 +65,7 @@ export default function SearchOverlay({ open, onClose }) {
           `/api/search?q=${encodeURIComponent(value)}`,
           {
             signal: controller.signal,
-            cache: "no-store",
+            cache: "default",
           }
         );
 

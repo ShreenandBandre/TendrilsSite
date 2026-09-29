@@ -1,8 +1,8 @@
 import { client } from "@/lib/sanity/client";
-
 import {
   homepageQuery,
   servicesListQuery,
+  siteSettingsQuery,
   industriesListQuery,
   solutionsListQuery,
 } from "@/lib/sanity/queries";
@@ -20,25 +20,16 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import Link from "next/link";
 import UniversalSections from "@/components/content/UniversalSections";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 /* =========================================================
    FALLBACK DATA
 ========================================================= */
 
 const fallbackStats = [
-  {
-    value: "250+",
-    label: "Global Consultants",
-  },
-  {
-    value: "3",
-    label: "Global Hubs",
-  },
-  {
-    value: "50+",
-    label: "Agile Practitioners",
-  },
+  { value: "250+", label: "Global Consultants" },
+  { value: "3", label: "Global Hubs" },
+  { value: "50+", label: "Agile Practitioners" },
 ];
 
 const fallbackServices = [
@@ -122,8 +113,7 @@ const fallbackWhyChooseUs = {
 
 const fallbackFinalCta = {
   eyebrow: "Ready for the next stage?",
-  title:
-    "Build the trajectory your commerce deserves.",
+  title: "Build the trajectory your commerce deserves.",
   description:
     "Tell us where your commerce operation is today, where it needs to go, and what is holding it back.",
   cta: {
@@ -133,7 +123,7 @@ const fallbackFinalCta = {
 };
 
 /* =========================================================
-   FETCH HOMEPAGE DATA
+   FETCH HOMEPAGE + REAL CONTENT
 ========================================================= */
 
 async function getHomepageData() {
@@ -143,65 +133,50 @@ async function getHomepageData() {
       servicesData,
       industriesData,
       solutionsData,
+      siteSettings,
     ] = await Promise.all([
       client.fetch(
         homepageQuery,
         {},
-        {
-          next: {
-            revalidate: 60,
-          },
-        }
+        { next: { revalidate: 300 } }
       ),
 
       client.fetch(
         servicesListQuery,
         {},
-        {
-          next: {
-            revalidate: 60,
-          },
-        }
+        { next: { revalidate: 300 } }
       ),
 
+      /*
+       * IMPORTANT:
+       * Fetch actual Industry documents directly.
+       * This means the homepage does not depend only on
+       * homepage.industriesSection.items references.
+       */
       client.fetch(
         industriesListQuery,
         {},
-        {
-          next: {
-            revalidate: 60,
-          },
-        }
+        { next: { revalidate: 300 } }
       ),
 
+      /*
+       * IMPORTANT:
+       * Fetch actual Solution documents directly.
+       * This prevents the hardcoded Solutions fallback
+       * from being shown when homepage references are empty.
+       */
       client.fetch(
         solutionsListQuery,
         {},
-        {
-          next: {
-            revalidate: 60,
-          },
-        }
+        { next: { revalidate: 300 } }
+      ),
+
+      client.fetch(
+        siteSettingsQuery,
+        {},
+        { next: { revalidate: 300 } }
       ),
     ]);
-
-    if (process.env.NODE_ENV !== "production") {
-      console.log("========== SANITY HOMEPAGE ==========");
-      console.log("Homepage data:", homepageData);
-      console.log(
-        "Services:",
-        servicesData?.length
-      );
-      console.log(
-        "Industries:",
-        industriesData?.length
-      );
-      console.log(
-        "Solutions:",
-        solutionsData?.length
-      );
-      console.log("======================================");
-    }
 
     return {
       ...(homepageData || {}),
@@ -210,19 +185,24 @@ async function getHomepageData() {
         ? servicesData
         : [],
 
+      /*
+       * These are the REAL Sanity Industry documents.
+       */
       industries: Array.isArray(industriesData)
         ? industriesData
         : [],
 
+      /*
+       * These are the REAL Sanity Solution documents.
+       */
       solutions: Array.isArray(solutionsData)
         ? solutionsData
         : [],
+
+      siteSettings: siteSettings || null,
     };
   } catch (error) {
-    console.error(
-      "🔥 SANITY HOMEPAGE FETCH FAILED:",
-      error
-    );
+    console.error("Sanity homepage fetch failed:", error);
 
     return null;
   }
@@ -235,29 +215,28 @@ async function getHomepageData() {
 export default async function HomePage() {
   const data = await getHomepageData();
 
+  /* =======================================================
+     BASIC HOMEPAGE DATA
+  ======================================================= */
+
   const stats =
-    Array.isArray(data?.stats) &&
-    data.stats.length > 0
+    Array.isArray(data?.stats) && data.stats.length > 0
       ? data.stats
       : fallbackStats;
 
   const services =
-    Array.isArray(data?.services) &&
-    data.services.length > 0
+    Array.isArray(data?.services) && data.services.length > 0
       ? data.services
       : fallbackServices;
 
   const expertise =
-    data?.expertise ||
-    fallbackExpertise;
+    data?.expertise || fallbackExpertise;
 
   const whyChooseUs =
-    data?.whyChooseUs ||
-    fallbackWhyChooseUs;
+    data?.whyChooseUs || fallbackWhyChooseUs;
 
   const finalCta =
-    data?.finalCta ||
-    fallbackFinalCta;
+    data?.finalCta || fallbackFinalCta;
 
   const marketingGrid =
     Array.isArray(data?.marketingGrid)
@@ -265,49 +244,73 @@ export default async function HomePage() {
       : [];
 
   const partnersMarquee =
-    data?.partnersMarquee ||
-    null;
+    data?.partnersMarquee || null;
 
   /* =======================================================
-     INDUSTRIES
+     REAL INDUSTRIES
+     
+     Priority:
+     1. Real documents fetched from Sanity
+     2. Existing homepage references as secondary fallback
+     3. Empty array
   ======================================================= */
 
   const realIndustries =
     Array.isArray(data?.industries) &&
     data.industries.length > 0
       ? data.industries
-      : Array.isArray(
-          data?.industriesSection?.items
-        )
+      : Array.isArray(data?.industriesSection?.items)
         ? data.industriesSection.items
         : [];
 
   const industriesSection = {
     ...(data?.industriesSection || {}),
+
+    /*
+     * Force the UI to receive actual Industry documents.
+     */
     items: realIndustries,
   };
 
   /* =======================================================
-     SOLUTIONS
+     REAL SOLUTIONS
+     
+     Priority:
+     1. Real documents fetched from Sanity
+     2. Existing homepage references as secondary fallback
+     3. Empty array
+     
+     This is what stops:
+       Shopify Replatforming
+       ERP & OMS Integration
+       Headless Commerce
+       B2B Ordering Portals
+     
+     from appearing unless they actually exist in Sanity.
   ======================================================= */
 
   const realSolutions =
     Array.isArray(data?.solutions) &&
     data.solutions.length > 0
       ? data.solutions
-      : Array.isArray(
-          data?.solutionsSection?.items
-        )
+      : Array.isArray(data?.solutionsSection?.items)
         ? data.solutionsSection.items
         : [];
 
   const solutionsSection = {
     ...(data?.solutionsSection || {}),
+
+    /*
+     * Force the UI to receive actual Solution documents.
+     */
     items: realSolutions,
   };
 
   /* =======================================================
      DEBUG
+     
+     Temporarily useful while checking Sanity.
+     Remove later if you want.
   ======================================================= */
 
   if (process.env.NODE_ENV !== "production") {
@@ -337,7 +340,9 @@ export default async function HomePage() {
   return (
     <main className="relative">
 
-      {/* HERO */}
+      {/* =================================================
+          HERO
+      ================================================= */}
 
       <DottedWorldHero
         stats={stats}
@@ -347,13 +352,15 @@ export default async function HomePage() {
         partnersMarquee={partnersMarquee}
       />
 
-      {/* VENDORS */}
+      {/* =================================================
+          VENDORS (right after hero)
+      ================================================= */}
 
-      <VendorsSection
-        data={data?.vendorsSection}
-      />
+      <VendorsSection data={data?.vendorsSection} />
 
-      {/* UNIVERSAL SECTIONS */}
+      {/* =================================================
+          UNIVERSAL SECTIONS
+      ================================================= */}
 
       {data?.sections?.length > 0 && (
         <ScrollReveal>
@@ -363,21 +370,23 @@ export default async function HomePage() {
         </ScrollReveal>
       )}
 
-      {/* SERVICES */}
+      {/* =================================================
+          SERVICES
+      ================================================= */}
 
-      <ServicesGrid
-        services={services}
-      />
+      <ServicesGrid services={services} />
 
-      {/* WHY CHOOSE US */}
+      {/* =================================================
+          WHY CHOOSE US
+      ================================================= */}
 
       <ScrollReveal>
-        <WhyChooseUs
-          data={whyChooseUs}
-        />
+        <WhyChooseUs data={whyChooseUs} />
       </ScrollReveal>
 
-      {/* DIGITAL MARKETING */}
+      {/* =================================================
+          DIGITAL MARKETING
+      ================================================= */}
 
       <ScrollReveal>
         <DigitalMarketingGrid
@@ -385,7 +394,9 @@ export default async function HomePage() {
         />
       </ScrollReveal>
 
-      {/* EXPERTISE */}
+      {/* =================================================
+          EXPERTISE
+      ================================================= */}
 
       <ScrollReveal>
         <ExpertiseSection
@@ -393,19 +404,33 @@ export default async function HomePage() {
         />
       </ScrollReveal>
 
-      {/* INDUSTRIES */}
+      {/* =================================================
+          INDUSTRIES
+          
+          IMPORTANT:
+          industriesSection.items now contains REAL
+          Sanity Industry documents.
+      ================================================= */}
 
       <IndustriesSection
         data={industriesSection}
       />
 
-      {/* SOLUTIONS */}
+      {/* =================================================
+          SOLUTIONS
+          
+          IMPORTANT:
+          solutionsSection.items now contains REAL
+          Sanity Solution documents.
+      ================================================= */}
 
       <SolutionsSection
         data={solutionsSection}
       />
 
-      {/* FINAL CTA */}
+      {/* =================================================
+          FINAL CTA
+      ================================================= */}
 
       <ScrollReveal>
         <section className="bg-[#111111] px-6 py-24 text-center text-[#f7f2e8]">
