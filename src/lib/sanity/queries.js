@@ -1,14 +1,11 @@
 import { groq } from "next-sanity";
 
 /* =========================================================
-   UNIVERSAL IMAGE PROJECTIONS
+   UNIVERSAL IMAGE PROJECTION
 ========================================================= */
 
 const imageProjection = `{
-  asset,
-  alt,
-  hotspot,
-  crop,
+  ...,
   "assetUrl": coalesce(asset->url, url)
 }`;
 
@@ -37,13 +34,29 @@ export const vendorsListQuery = groq`
     name,
     category,
     url,
-    "imageUrl": coalesce(logo.asset->url, logo.assetUrl),
+
+    "imageUrl": coalesce(
+      logo.asset->url,
+      logo.assetUrl
+    ),
+
     logo ${imageProjection}
   }
 `;
 
+/*
+ * MAIN HOMEPAGE QUERY
+ *
+ * Important:
+ * - Homepage content comes directly from Sanity.
+ * - We do NOT replace homepage content with hardcoded values.
+ * - Industries and Solutions are fetched separately below.
+ * - Universal sections are preserved.
+ */
+
 export const homepageQuery = groq`
   *[_type == "homepage"][0]{
+
     title,
 
     hero{
@@ -76,10 +89,12 @@ export const homepageQuery = groq`
     stats[]{
       value,
       label,
+
       "imageUrl": coalesce(
         image.asset->url,
         asset->url
       ),
+
       image ${imageProjection}
     },
 
@@ -173,13 +188,12 @@ export const homepageQuery = groq`
     },
 
     /*
-     * IMPORTANT:
-     * We keep the section configuration here,
-     * but DO NOT resolve all Industry documents here.
+     * Keep homepage section configuration.
      *
-     * The homepage fetches the actual Industry documents
-     * separately using the lightweight industriesListQuery.
+     * Actual Industry documents are fetched separately
+     * by industriesListQuery.
      */
+
     industriesSection{
       eyebrow,
       title,
@@ -192,8 +206,12 @@ export const homepageQuery = groq`
     },
 
     /*
-     * Same approach for Solutions.
+     * Keep homepage section configuration.
+     *
+     * Actual Solution documents are fetched separately
+     * by solutionsListQuery.
      */
+
     solutionsSection{
       eyebrow,
       title,
@@ -228,11 +246,12 @@ export const homepageQuery = groq`
     },
 
     /*
-     * Universal CMS sections are intentionally preserved.
+     * Universal CMS sections.
      *
-     * We are not aggressively stripping these yet because
-     * different section types use different fields.
+     * These are intentionally kept because different
+     * section types use different fields.
      */
+
     sections[]{
       ...,
 
@@ -347,26 +366,30 @@ export const homepageQuery = groq`
     },
 
     /*
-     * Only the two fields actually required by the homepage
-     * hero are fetched from siteSettings.
+     * Site settings are fetched inside the homepage query
+     * so we don't need another homepage request.
      *
-     * This removes a separate siteSettings Sanity request.
+     * Keep the complete selected image object rather than
+     * constructing a new projection from coalesce().
      */
+
     "siteSettings": *[
       _type == "siteSettings"
     ][0]{
-      "headerLogo": coalesce(
-        headerLogoDark,
-        headerLogoLight
-      ) ${imageProjection},
+      headerLogoDark ${imageProjection},
+      headerLogoLight ${imageProjection},
+      headerLogoAlt,
 
-      headerLogoAlt
+      "headerLogoUrl": coalesce(
+        headerLogoDark.asset->url,
+        headerLogoLight.asset->url
+      )
     }
   }
 `;
 
 /* =========================================================
-   SERVICES NAVIGATION & SLUG
+   SERVICES LIST
 ========================================================= */
 
 export const servicesListQuery = groq`
@@ -374,7 +397,10 @@ export const servicesListQuery = groq`
     _type == "service" &&
     defined(slug.current)
   ]
-  | order(coalesce(order, 9999) asc, name asc)
+  | order(
+      coalesce(order, 9999) asc,
+      name asc
+    )
   {
     _id,
 
@@ -392,15 +418,8 @@ export const servicesListQuery = groq`
 
     order,
 
-    /*
-     * ServicesGrid checks parentId to determine
-     * whether this is a child service.
-     */
     "parentId": parent._ref,
 
-    /*
-     * Homepage only needs a usable image URL.
-     */
     "heroImageUrl": coalesce(
       hero.image.asset->url,
       heroImage.asset->url,
@@ -408,6 +427,10 @@ export const servicesListQuery = groq`
     )
   }
 `;
+
+/* =========================================================
+   SERVICE BY SLUG
+========================================================= */
 
 export const serviceBySlugQuery = groq`
   *[
@@ -424,8 +447,12 @@ export const serviceBySlugQuery = groq`
     featured,
     pageStyle,
 
-    // Root level image fallbacks
-    "imageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url),
+    "imageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url,
+      image.asset->url
+    ),
+
     image ${imageProjection},
 
     hero{
@@ -433,7 +460,13 @@ export const serviceBySlugQuery = groq`
       headline,
       highlight,
       description,
-      "imageUrl": coalesce(image.asset->url, heroImage.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        heroImage.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection},
       heroImage ${imageProjection},
 
@@ -460,24 +493,44 @@ export const serviceBySlugQuery = groq`
 
     stats[]{
       ...,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection}
     },
 
     sections[]{
       ...,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection},
 
       items[]{
         ...,
-        "imageUrl": coalesce(image.asset->url, asset->url),
+
+        "imageUrl": coalesce(
+          image.asset->url,
+          asset->url
+        ),
+
         image ${imageProjection}
       },
 
       cards[]{
         ...,
-        "imageUrl": coalesce(image.asset->url, asset->url),
+
+        "imageUrl": coalesce(
+          image.asset->url,
+          asset->url
+        ),
+
         image ${imageProjection}
       }
     },
@@ -492,7 +545,12 @@ export const serviceBySlugQuery = groq`
       _type == "service" &&
       parent._ref == ^._id &&
       defined(slug.current)
-    ] | order(coalesce(order, 9999) asc, name asc) {
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        name asc
+      )
+    {
       _id,
       name,
       "slug": slug.current,
@@ -524,11 +582,20 @@ export const serviceBySlugQuery = groq`
   }
 `;
 
+/* =========================================================
+   SERVICE HIERARCHY
+========================================================= */
+
 export const serviceHierarchyQuery = groq`
   *[
     _type == "service" &&
     defined(slug.current)
-  ] | order(coalesce(order, 9999) asc, name asc) {
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      name asc
+    )
+  {
     _id,
     name,
     "slug": slug.current,
@@ -537,12 +604,21 @@ export const serviceHierarchyQuery = groq`
   }
 `;
 
+/* =========================================================
+   SERVICES NAVIGATION
+========================================================= */
+
 export const servicesNavigationQuery = groq`
   *[
     _type == "service" &&
     defined(slug.current) &&
     !defined(parent._ref)
-  ] | order(coalesce(order, 9999) asc, name asc) {
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      name asc
+    )
+  {
     _id,
     name,
     "slug": slug.current,
@@ -554,7 +630,12 @@ export const servicesNavigationQuery = groq`
       _type == "service" &&
       parent._ref == ^._id &&
       defined(slug.current)
-    ] | order(coalesce(order, 9999) asc, name asc) {
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        name asc
+      )
+    {
       _id,
       name,
       "slug": slug.current,
@@ -566,7 +647,12 @@ export const servicesNavigationQuery = groq`
         _type == "service" &&
         parent._ref == ^._id &&
         defined(slug.current)
-      ] | order(coalesce(order, 9999) asc, name asc) {
+      ]
+      | order(
+          coalesce(order, 9999) asc,
+          name asc
+        )
+      {
         _id,
         name,
         "slug": slug.current,
@@ -579,7 +665,7 @@ export const servicesNavigationQuery = groq`
 `;
 
 /* =========================================================
-   SOLUTIONS (With deep multi-fallback image projection)
+   SOLUTIONS NAVIGATION
 ========================================================= */
 
 export const solutionsNavigationQuery = groq`
@@ -587,7 +673,12 @@ export const solutionsNavigationQuery = groq`
     _type == "solution" &&
     defined(slug.current) &&
     !defined(parent._ref)
-  ] | order(coalesce(order, 9999) asc, title asc) {
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      title asc
+    )
+  {
     _id,
     title,
     "slug": slug.current,
@@ -595,15 +686,51 @@ export const solutionsNavigationQuery = groq`
     category,
     shortDescription,
     featured,
-    "children": *[_type == "solution" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-      _id, title, "slug": slug.current, shortDescription, featured,
-      "children": *[_type == "solution" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-        _id, title, "slug": slug.current, shortDescription
+
+    "children": *[
+      _type == "solution" &&
+      parent._ref == ^._id &&
+      defined(slug.current)
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        title asc
+      )
+    {
+      _id,
+      title,
+      "slug": slug.current,
+      shortDescription,
+      featured,
+
+      "children": *[
+        _type == "solution" &&
+        parent._ref == ^._id &&
+        defined(slug.current)
+      ]
+      | order(
+          coalesce(order, 9999) asc,
+          title asc
+        )
+      {
+        _id,
+        title,
+        "slug": slug.current,
+        shortDescription
       }
     },
-    "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url)
+
+    "heroImageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url,
+      image.asset->url
+    )
   }
 `;
+
+/* =========================================================
+   SOLUTIONS LIST
+========================================================= */
 
 export const solutionsListQuery = groq`
   *[
@@ -630,9 +757,6 @@ export const solutionsListQuery = groq`
 
     featured,
 
-    /*
-     * SolutionsSection only needs a displayable image.
-     */
     "imageUrl": coalesce(
       homeImage.asset->url,
       hero.image.asset->url,
@@ -643,14 +767,27 @@ export const solutionsListQuery = groq`
   }
 `;
 
+/* =========================================================
+   SOLUTIONS SIMPLE QUERY
+========================================================= */
+
 export const solutionsQuery = groq`
   *[
     _type == "solution" &&
     defined(slug.current)
-  ] | order(coalesce(order,9999) asc, title asc) {
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      title asc
+    )
+  {
     "slug": slug.current
   }
 `;
+
+/* =========================================================
+   SOLUTION BY SLUG
+========================================================= */
 
 export const solutionBySlugQuery = groq`
   *[
@@ -667,21 +804,33 @@ export const solutionBySlugQuery = groq`
     summary,
     pageStyle,
 
-    // Universal Direct Fallback URLs
     "imageUrl": coalesce(
       hero.image.asset->url,
-      hero.imageUrl,
       heroImage.asset->url,
       image.asset->url,
       mainImage.asset->url,
       thumbnail.asset->url
     ),
+
     image ${imageProjection},
     heroImage ${imageProjection},
     mainImage ${imageProjection},
 
-    "children": *[_type == "solution" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-      _id, title, "slug": slug.current, category, shortDescription
+    "children": *[
+      _type == "solution" &&
+      parent._ref == ^._id &&
+      defined(slug.current)
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        title asc
+      )
+    {
+      _id,
+      title,
+      "slug": slug.current,
+      category,
+      shortDescription
     },
 
     hero{
@@ -689,23 +838,38 @@ export const solutionBySlugQuery = groq`
       headline,
       highlight,
       description,
+
       "imageUrl": coalesce(
         image.asset->url,
         heroImage.asset->url,
-        asset->url,
-        imageUrl
+        asset->url
       ),
+
       image ${imageProjection},
       heroImage ${imageProjection},
 
-      primaryCta{label, href, page->${pageReferenceProjection}},
-      secondaryCta{label, href, page->${pageReferenceProjection}}
+      primaryCta{
+        label,
+        href,
+        page->${pageReferenceProjection}
+      },
+
+      secondaryCta{
+        label,
+        href,
+        page->${pageReferenceProjection}
+      }
     },
 
     stats[]{
       value,
       label,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection}
     },
 
@@ -713,34 +877,75 @@ export const solutionBySlugQuery = groq`
 
     sections[]{
       ...,
-      cta{..., page->${pageReferenceProjection}},
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      cta{
+        ...,
+        page->${pageReferenceProjection}
+      },
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection},
 
       items[]{
         ...,
-        cta{..., page->${pageReferenceProjection}},
-        "imageUrl": coalesce(image.asset->url, asset->url),
+
+        cta{
+          ...,
+          page->${pageReferenceProjection}
+        },
+
+        "imageUrl": coalesce(
+          image.asset->url,
+          asset->url
+        ),
+
         image ${imageProjection}
       },
 
       cards[]{
         ...,
-        cta{..., page->${pageReferenceProjection}},
-        "imageUrl": coalesce(image.asset->url, asset->url),
+
+        cta{
+          ...,
+          page->${pageReferenceProjection}
+        },
+
+        "imageUrl": coalesce(
+          image.asset->url,
+          asset->url
+        ),
+
         image ${imageProjection}
       },
 
       steps[]{
         ...,
-        cta{..., page->${pageReferenceProjection}},
-        "imageUrl": coalesce(image.asset->url, asset->url),
+
+        cta{
+          ...,
+          page->${pageReferenceProjection}
+        },
+
+        "imageUrl": coalesce(
+          image.asset->url,
+          asset->url
+        ),
+
         image ${imageProjection}
       },
 
       _type == "splitContent" => {
         ...,
-        "imageUrl": coalesce(image.asset->url, asset->url),
+
+        "imageUrl": coalesce(
+          image.asset->url,
+          asset->url
+        ),
+
         image ${imageProjection}
       }
     },
@@ -755,6 +960,7 @@ export const solutionBySlugQuery = groq`
 
     body[]{
       ...,
+
       _type == "image" => ${imageProjection}
     },
 
@@ -764,7 +970,12 @@ export const solutionBySlugQuery = groq`
       "slug": slug.current,
       pillar,
       shortDescription,
-      "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url)
+
+      "heroImageUrl": coalesce(
+        hero.image.asset->url,
+        heroImage.asset->url,
+        image.asset->url
+      )
     },
 
     "industries": industries[]->{
@@ -798,7 +1009,7 @@ export const solutionBySlugQuery = groq`
 `;
 
 /* =========================================================
-   INDUSTRIES & CASE STUDIES
+   INDUSTRIES NAVIGATION
 ========================================================= */
 
 export const industriesNavigationQuery = groq`
@@ -806,7 +1017,12 @@ export const industriesNavigationQuery = groq`
     _type == "industry" &&
     defined(slug.current) &&
     !defined(parent._ref)
-  ] | order(coalesce(order, 9999) asc, title asc){
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      title asc
+    )
+  {
     _id,
     title,
     "slug": slug.current,
@@ -814,23 +1030,61 @@ export const industriesNavigationQuery = groq`
     category,
     shortDescription,
     featured,
-    "children": *[_type == "industry" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-      _id, title, "slug": slug.current, shortDescription, featured,
-      "children": *[_type == "industry" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-        _id, title, "slug": slug.current, shortDescription
+
+    "children": *[
+      _type == "industry" &&
+      parent._ref == ^._id &&
+      defined(slug.current)
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        title asc
+      )
+    {
+      _id,
+      title,
+      "slug": slug.current,
+      shortDescription,
+      featured,
+
+      "children": *[
+        _type == "industry" &&
+        parent._ref == ^._id &&
+        defined(slug.current)
+      ]
+      | order(
+          coalesce(order, 9999) asc,
+          title asc
+        )
+      {
+        _id,
+        title,
+        "slug": slug.current,
+        shortDescription
       }
     },
-    "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url),
-    "heroImage": coalesce(hero.image, image) ${imageProjection}
+
+    "heroImageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url,
+      image.asset->url
+    )
   }
 `;
+
+/* =========================================================
+   INDUSTRIES LIST
+========================================================= */
 
 export const industriesListQuery = groq`
   *[
     _type == "industry" &&
     defined(slug.current)
   ]
-  | order(coalesce(order, 9999) asc, title asc)
+  | order(
+      coalesce(order, 9999) asc,
+      title asc
+    )
   {
     _id,
 
@@ -844,10 +1098,6 @@ export const industriesListQuery = groq`
 
     summary,
 
-    /*
-     * IndustriesSection needs a usable image.
-     * Keep the actual image object small.
-     */
     "imageUrl": coalesce(
       homeImage.asset->url,
       hero.image.asset->url,
@@ -856,6 +1106,10 @@ export const industriesListQuery = groq`
     )
   }
 `;
+
+/* =========================================================
+   INDUSTRY BY SLUG
+========================================================= */
 
 export const industryBySlugQuery = groq`
   *[
@@ -870,8 +1124,21 @@ export const industryBySlugQuery = groq`
     featured,
     order,
 
-    "children": *[_type == "industry" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-      _id, title, "slug": slug.current, category, shortDescription
+    "children": *[
+      _type == "industry" &&
+      parent._ref == ^._id &&
+      defined(slug.current)
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        title asc
+      )
+    {
+      _id,
+      title,
+      "slug": slug.current,
+      category,
+      shortDescription
     },
 
     hero{
@@ -879,19 +1146,44 @@ export const industryBySlugQuery = groq`
       headline,
       highlight,
       description,
-      "imageUrl": coalesce(image.asset->url, heroImage.asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        heroImage.asset->url
+      ),
+
       image ${imageProjection},
-      primaryCta{label, href, page->${pageReferenceProjection}},
-      secondaryCta{label, href, page->${pageReferenceProjection}}
+
+      primaryCta{
+        label,
+        href,
+        page->${pageReferenceProjection}
+      },
+
+      secondaryCta{
+        label,
+        href,
+        page->${pageReferenceProjection}
+      }
     },
 
-    "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url),
+    "heroImageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url,
+      image.asset->url
+    ),
 
     painPoints,
+
     characteristics[]{
       title,
       description,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection}
     },
 
@@ -899,7 +1191,12 @@ export const industryBySlugQuery = groq`
       number,
       title,
       description,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection}
     },
 
@@ -907,14 +1204,24 @@ export const industryBySlugQuery = groq`
       name,
       category,
       description,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection}
     },
 
     capabilities[]{
       title,
       description,
-      "imageUrl": coalesce(image.asset->url, asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        asset->url
+      ),
+
       image ${imageProjection}
     },
 
@@ -925,6 +1232,7 @@ export const industryBySlugQuery = groq`
 
     body[]{
       ...,
+
       _type == "image" => ${imageProjection}
     },
 
@@ -934,7 +1242,11 @@ export const industryBySlugQuery = groq`
       "slug": slug.current,
       pillar,
       shortDescription,
-      "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url)
+
+      "heroImageUrl": coalesce(
+        hero.image.asset->url,
+        heroImage.asset->url
+      )
     },
 
     relatedCaseStudies[]->{
@@ -943,11 +1255,16 @@ export const industryBySlugQuery = groq`
       "slug": slug.current,
       client,
       challenge,
+
       results[]{
         value,
         metric
       },
-      "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url)
+
+      "heroImageUrl": coalesce(
+        hero.image.asset->url,
+        heroImage.asset->url
+      )
     },
 
     faqs[]{
@@ -966,11 +1283,20 @@ export const industryBySlugQuery = groq`
   }
 `;
 
+/* =========================================================
+   CASE STUDIES
+========================================================= */
+
 export const caseStudiesQuery = groq`
   *[
     _type == "caseStudy" &&
     defined(slug.current)
-  ] | order(coalesce(order, 9999) asc, title asc) {
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      title asc
+    )
+  {
     "slug": slug.current
   }
 `;
@@ -979,7 +1305,12 @@ export const caseStudyHierarchyQuery = groq`
   *[
     _type == "caseStudy" &&
     defined(slug.current)
-  ] | order(coalesce(order, 9999) asc, title asc) {
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      title asc
+    )
+  {
     _id,
     title,
     "slug": slug.current,
@@ -991,7 +1322,12 @@ export const caseStudiesListQuery = groq`
   *[
     _type == "caseStudy" &&
     defined(slug.current)
-  ] | order(coalesce(order, 9999) asc, _createdAt desc){
+  ]
+  | order(
+      coalesce(order, 9999) asc,
+      _createdAt desc
+    )
+  {
     _id,
     title,
     "slug": slug.current,
@@ -999,19 +1335,41 @@ export const caseStudiesListQuery = groq`
     client,
     shortDescription,
     challenge,
-    "children": *[_type == "caseStudy" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-      _id, title, "slug": slug.current, shortDescription, client
+
+    "children": *[
+      _type == "caseStudy" &&
+      parent._ref == ^._id &&
+      defined(slug.current)
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        title asc
+      )
+    {
+      _id,
+      title,
+      "slug": slug.current,
+      shortDescription,
+      client
     },
+
     results[]{
       value,
       metric
     },
+
     featured,
+
     "industry": industry->{
       title,
       "slug": slug.current
     },
-    "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url)
+
+    "heroImageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url,
+      image.asset->url
+    )
   }
 `;
 
@@ -1026,14 +1384,28 @@ export const caseStudyBySlugQuery = groq`
     client,
     shortDescription,
 
-    // Legacy top-level hero image — projected so the renderer's fallback
-    // (for case studies whose image lives here instead of hero.image)
-    // actually resolves to a real asset URL instead of always being null.
     heroImage ${imageProjection},
-    "imageUrl": coalesce(hero.image.asset->url, heroImage.asset->url),
 
-    "children": *[_type == "caseStudy" && parent._ref == ^._id && defined(slug.current)] | order(coalesce(order,9999) asc, title asc){
-      _id, title, "slug": slug.current, client, shortDescription
+    "imageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url
+    ),
+
+    "children": *[
+      _type == "caseStudy" &&
+      parent._ref == ^._id &&
+      defined(slug.current)
+    ]
+    | order(
+        coalesce(order, 9999) asc,
+        title asc
+      )
+    {
+      _id,
+      title,
+      "slug": slug.current,
+      client,
+      shortDescription
     },
 
     hero{
@@ -1041,13 +1413,32 @@ export const caseStudyBySlugQuery = groq`
       headline,
       highlight,
       description,
-      "imageUrl": coalesce(image.asset->url, heroImage.asset->url),
+
+      "imageUrl": coalesce(
+        image.asset->url,
+        heroImage.asset->url
+      ),
+
       image ${imageProjection},
-      primaryCta{label, href, page->${pageReferenceProjection}},
-      secondaryCta{label, href, page->${pageReferenceProjection}}
+
+      primaryCta{
+        label,
+        href,
+        page->${pageReferenceProjection}
+      },
+
+      secondaryCta{
+        label,
+        href,
+        page->${pageReferenceProjection}
+      }
     },
 
-    "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url),
+    "heroImageUrl": coalesce(
+      hero.image.asset->url,
+      heroImage.asset->url,
+      image.asset->url
+    ),
 
     "industry": industry->{
       _id,
@@ -1080,6 +1471,7 @@ export const caseStudyBySlugQuery = groq`
 
     body[]{
       ...,
+
       _type == "image" => ${imageProjection}
     },
 
@@ -1091,11 +1483,18 @@ export const caseStudyBySlugQuery = groq`
       "slug": slug.current,
       client,
       shortDescription,
+
       results[]{
         value,
         metric
       },
-      "heroImageUrl": coalesce(hero.image.asset->url, heroImage.asset->url, image.asset->url),
+
+      "heroImageUrl": coalesce(
+        hero.image.asset->url,
+        heroImage.asset->url,
+        image.asset->url
+      ),
+
       "industry": industry->{
         title,
         "slug": slug.current
@@ -1114,15 +1513,26 @@ export const caseStudyBySlugQuery = groq`
 `;
 
 /* =========================================================
-   SITE SETTINGS (navbar logo, footer, nav links, social)
+   SITE SETTINGS
 ========================================================= */
 
 export const siteSettingsQuery = groq`
   *[_type == "siteSettings"][0]{
-    "headerLogo": coalesce(headerLogoDark, headerLogoLight) ${imageProjection},
-    "headerLogoUrl": coalesce(headerLogoDark.asset->url, headerLogoLight.asset->url),
+
     headerLogoDark ${imageProjection},
+
     headerLogoLight ${imageProjection},
+
+    "headerLogo": coalesce(
+      headerLogoDark,
+      headerLogoLight
+    ),
+
+    "headerLogoUrl": coalesce(
+      headerLogoDark.asset->url,
+      headerLogoLight.asset->url
+    ),
+
     headerLogoAlt,
 
     navLinks[]{
@@ -1132,13 +1542,18 @@ export const siteSettingsQuery = groq`
     },
 
     footerLogo ${imageProjection},
+
     "footerLogoUrl": footerLogo.asset->url,
+
     footerDescription,
+
     contactEmail,
+
     contactPhone,
 
     footerColumns[]{
       title,
+
       links[]{
         label,
         href
@@ -1157,6 +1572,7 @@ export const siteSettingsQuery = groq`
 
     defaultSeo{
       ...,
+
       "ogImage": ogImage ${imageProjection}
     }
   }
@@ -1168,7 +1584,9 @@ export const siteSettingsQuery = groq`
 
 export const aboutPageQuery = groq`
   *[_type == "aboutPage"][0]{
+
     title,
+
     slug,
 
     hero{
@@ -1176,7 +1594,9 @@ export const aboutPageQuery = groq`
       headline,
       highlight,
       description,
+
       "imageUrl": image.asset->url,
+
       image ${imageProjection},
 
       primaryCta{
@@ -1203,58 +1623,71 @@ export const aboutPageQuery = groq`
 
       items[]{
         ...,
+
         cta{
           ...,
           page->${pageReferenceProjection}
         },
+
         "imageUrl": coalesce(
           image.asset->url,
           asset->url
         ),
+
         image ${imageProjection}
       },
 
       cards[]{
         ...,
+
         cta{
           ...,
           page->${pageReferenceProjection}
         },
+
         "imageUrl": coalesce(
           image.asset->url,
           asset->url
         ),
+
         image ${imageProjection}
       },
 
       steps[]{
         ...,
+
         cta{
           ...,
           page->${pageReferenceProjection}
         },
+
         "imageUrl": coalesce(
           image.asset->url,
           asset->url
         ),
+
         image ${imageProjection}
       },
 
       members[]{
         ...,
+
         "imageUrl": coalesce(
           image.asset->url,
           photo.asset->url
         ),
+
         image ${imageProjection}
       },
 
       partners[]{
         ...,
+
         "imageUrl": coalesce(
           image.asset->url,
           logo.asset->url
         ),
+
         image ${imageProjection}
       },
 
@@ -1264,10 +1697,12 @@ export const aboutPageQuery = groq`
         name,
         title,
         company,
+
         "imageUrl": coalesce(
           image.asset->url,
           asset->url
         ),
+
         image ${imageProjection}
       }
     },
@@ -1277,9 +1712,12 @@ export const aboutPageQuery = groq`
       "heading": "Technology that powers our work",
       "description": "We work with leading commerce, marketing, ERP, customer experience, and digital platforms.",
 
-      "partners": *[_type == "homepage"][0].partnersMarquee.partners[]{
+      "partners": *[
+        _type == "homepage"
+      ][0].partnersMarquee.partners[]{
         name,
         url,
+
         "imageUrl": coalesce(
           logo.asset->url,
           image.asset->url
@@ -1291,9 +1729,18 @@ export const aboutPageQuery = groq`
       eyebrow,
       title,
       subtitle,
+
       items[]->{
-        _id, name, category, url,
-        "imageUrl": coalesce(logo.asset->url, logo.assetUrl),
+        _id,
+        name,
+        category,
+        url,
+
+        "imageUrl": coalesce(
+          logo.asset->url,
+          logo.assetUrl
+        ),
+
         logo ${imageProjection}
       }
     },

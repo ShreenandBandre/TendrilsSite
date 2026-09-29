@@ -23,7 +23,7 @@ import UniversalSections from "@/components/content/UniversalSections";
 /*
  * Keep homepage ISR.
  *
- * Sanity data is cached/revalidated every 60 seconds.
+ * Sanity data is revalidated every 60 seconds.
  */
 export const revalidate = 60;
 
@@ -157,27 +157,6 @@ const fallbackFinalCta = {
    FETCH HOMEPAGE DATA
 ========================================================= */
 
-/*
- * IMPORTANT:
- *
- * We intentionally keep these as separate lightweight queries.
- *
- * Why?
- *
- * homepageQuery
- *    -> homepage content/config
- *
- * servicesListQuery
- *    -> only fields ServicesGrid needs
- *
- * industriesListQuery
- *    -> only fields IndustriesSection needs
- *
- * solutionsListQuery
- *    -> only fields SolutionsSection needs
- *
- * All four requests run concurrently.
- */
 async function getHomepageData() {
   try {
     const [
@@ -186,6 +165,9 @@ async function getHomepageData() {
       industriesData,
       solutionsData,
     ] = await Promise.all([
+      /*
+       * Main homepage CMS document
+       */
       client.fetch(
         homepageQuery,
         {},
@@ -196,6 +178,9 @@ async function getHomepageData() {
         }
       ),
 
+      /*
+       * Lightweight service list.
+       */
       client.fetch(
         servicesListQuery,
         {},
@@ -206,6 +191,9 @@ async function getHomepageData() {
         }
       ),
 
+      /*
+       * Lightweight industry list.
+       */
       client.fetch(
         industriesListQuery,
         {},
@@ -216,6 +204,9 @@ async function getHomepageData() {
         }
       ),
 
+      /*
+       * Lightweight solution list.
+       */
       client.fetch(
         solutionsListQuery,
         {},
@@ -226,6 +217,39 @@ async function getHomepageData() {
         }
       ),
     ]);
+
+    /*
+     * Server-side debugging.
+     *
+     * These logs are intentionally small.
+     */
+    if (process.env.NODE_ENV !== "production") {
+      console.log(
+        "Sanity homepage loaded:",
+        !!homepageData
+      );
+
+      console.log(
+        "Sanity services:",
+        Array.isArray(servicesData)
+          ? servicesData.length
+          : 0
+      );
+
+      console.log(
+        "Sanity industries:",
+        Array.isArray(industriesData)
+          ? industriesData.length
+          : 0
+      );
+
+      console.log(
+        "Sanity solutions:",
+        Array.isArray(solutionsData)
+          ? solutionsData.length
+          : 0
+      );
+    }
 
     return {
       ...(homepageData || {}),
@@ -243,12 +267,20 @@ async function getHomepageData() {
         : [],
     };
   } catch (error) {
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT silently return null.
+     *
+     * Previously this caused the whole homepage to fall back
+     * to hardcoded content whenever Sanity failed.
+     */
     console.error(
-      "Sanity homepage fetch failed:",
+      "🔥 SANITY HOMEPAGE FETCH FAILED:",
       error
     );
 
-    return null;
+    throw error;
   }
 }
 
@@ -276,16 +308,22 @@ export default async function HomePage() {
       : fallbackServices;
 
   const expertise =
-    data?.expertise ||
-    fallbackExpertise;
+    data?.expertise &&
+    typeof data.expertise === "object"
+      ? data.expertise
+      : fallbackExpertise;
 
   const whyChooseUs =
-    data?.whyChooseUs ||
-    fallbackWhyChooseUs;
+    data?.whyChooseUs &&
+    typeof data.whyChooseUs === "object"
+      ? data.whyChooseUs
+      : fallbackWhyChooseUs;
 
   const finalCta =
-    data?.finalCta ||
-    fallbackFinalCta;
+    data?.finalCta &&
+    typeof data.finalCta === "object"
+      ? data.finalCta
+      : fallbackFinalCta;
 
   const marketingGrid =
     Array.isArray(data?.marketingGrid)
@@ -293,56 +331,35 @@ export default async function HomePage() {
       : [];
 
   const partnersMarquee =
-    data?.partnersMarquee ||
-    null;
+    data?.partnersMarquee || null;
 
   /* =======================================================
-     REAL INDUSTRIES
+     INDUSTRIES
   ======================================================= */
 
   const realIndustries =
     Array.isArray(data?.industries) &&
     data.industries.length > 0
       ? data.industries
-      : Array.isArray(
-          data?.industriesSection?.items
-        )
-        ? data.industriesSection.items
-        : [];
+      : [];
 
-  /*
-   * Keep the section configuration from Sanity,
-   * but replace its items with the actual Industry
-   * documents fetched above.
-   */
   const industriesSection = {
     ...(data?.industriesSection || {}),
-
     items: realIndustries,
   };
 
   /* =======================================================
-     REAL SOLUTIONS
+     SOLUTIONS
   ======================================================= */
 
   const realSolutions =
     Array.isArray(data?.solutions) &&
     data.solutions.length > 0
       ? data.solutions
-      : Array.isArray(
-          data?.solutionsSection?.items
-        )
-        ? data.solutionsSection.items
-        : [];
+      : [];
 
-  /*
-   * Keep the section configuration from Sanity,
-   * but replace its items with the actual Solution
-   * documents fetched above.
-   */
   const solutionsSection = {
     ...(data?.solutionsSection || {}),
-
     items: realSolutions,
   };
 
@@ -385,12 +402,8 @@ export default async function HomePage() {
         stats={stats}
         hero={data?.hero || {}}
         logo={data?.siteSettings?.headerLogo}
-        logoAlt={
-          data?.siteSettings?.headerLogoAlt
-        }
-        partnersMarquee={
-          partnersMarquee
-        }
+        logoAlt={data?.siteSettings?.headerLogoAlt}
+        partnersMarquee={partnersMarquee}
       />
 
       {/* =================================================
@@ -405,13 +418,14 @@ export default async function HomePage() {
           UNIVERSAL SECTIONS
       ================================================= */}
 
-      {data?.sections?.length > 0 && (
-        <ScrollReveal>
-          <UniversalSections
-            sections={data.sections}
-          />
-        </ScrollReveal>
-      )}
+      {Array.isArray(data?.sections) &&
+        data.sections.length > 0 && (
+          <ScrollReveal>
+            <UniversalSections
+              sections={data.sections}
+            />
+          </ScrollReveal>
+        )}
 
       {/* =================================================
           SERVICES
