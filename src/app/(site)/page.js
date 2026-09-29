@@ -1,8 +1,8 @@
 import { client } from "@/lib/sanity/client";
+
 import {
   homepageQuery,
   servicesListQuery,
-  siteSettingsQuery,
   industriesListQuery,
   solutionsListQuery,
 } from "@/lib/sanity/queries";
@@ -20,6 +20,11 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import Link from "next/link";
 import UniversalSections from "@/components/content/UniversalSections";
 
+/*
+ * Keep homepage ISR.
+ *
+ * Sanity data is cached/revalidated every 60 seconds.
+ */
 export const revalidate = 60;
 
 /* =========================================================
@@ -27,9 +32,18 @@ export const revalidate = 60;
 ========================================================= */
 
 const fallbackStats = [
-  { value: "250+", label: "Global Consultants" },
-  { value: "3", label: "Global Hubs" },
-  { value: "50+", label: "Agile Practitioners" },
+  {
+    value: "250+",
+    label: "Global Consultants",
+  },
+  {
+    value: "3",
+    label: "Global Hubs",
+  },
+  {
+    value: "50+",
+    label: "Agile Practitioners",
+  },
 ];
 
 const fallbackServices = [
@@ -67,16 +81,20 @@ const fallbackServices = [
 
 const fallbackExpertise = {
   title: "Our Strategic Expertise",
+
   subtitle:
     "Driven by purpose, engineered for the future of digital commerce.",
+
   items: [
     {
       heading: "Our Mission",
+
       description:
         "To collaborate and foster disruption with leading-edge solutions that ensure our clients' future readiness.",
     },
     {
       heading: "Our Vision",
+
       description:
         "To shape a bold new era of digital disruption, with quality, agility, and integrity at the core.",
     },
@@ -85,26 +103,35 @@ const fallbackExpertise = {
 
 const fallbackWhyChooseUs = {
   title: "Why Choose Tendrils?",
+
   subtitle:
     "We combine strategy, technology, and execution to create commerce systems built for long-term growth.",
+
   features: [
     {
       title: "Commerce Expertise",
+
       description:
         "Deep expertise across Shopify, digital commerce, and integrations.",
     },
+
     {
       title: "Built for Scale",
+
       description:
         "We design systems that evolve with your business.",
     },
+
     {
       title: "Connected Ecosystems",
+
       description:
         "From storefronts to ERP, CRM, PIM, and OMS.",
     },
+
     {
       title: "Long-Term Partnership",
+
       description:
         "Continuous optimisation, support, and strategic guidance.",
     },
@@ -113,9 +140,13 @@ const fallbackWhyChooseUs = {
 
 const fallbackFinalCta = {
   eyebrow: "Ready for the next stage?",
-  title: "Build the trajectory your commerce deserves.",
+
+  title:
+    "Build the trajectory your commerce deserves.",
+
   description:
     "Tell us where your commerce operation is today, where it needs to go, and what is holding it back.",
+
   cta: {
     label: "Book a Consultation",
     href: "/contact",
@@ -123,9 +154,30 @@ const fallbackFinalCta = {
 };
 
 /* =========================================================
-   FETCH HOMEPAGE + REAL CONTENT
+   FETCH HOMEPAGE DATA
 ========================================================= */
 
+/*
+ * IMPORTANT:
+ *
+ * We intentionally keep these as separate lightweight queries.
+ *
+ * Why?
+ *
+ * homepageQuery
+ *    -> homepage content/config
+ *
+ * servicesListQuery
+ *    -> only fields ServicesGrid needs
+ *
+ * industriesListQuery
+ *    -> only fields IndustriesSection needs
+ *
+ * solutionsListQuery
+ *    -> only fields SolutionsSection needs
+ *
+ * All four requests run concurrently.
+ */
 async function getHomepageData() {
   try {
     const [
@@ -133,48 +185,45 @@ async function getHomepageData() {
       servicesData,
       industriesData,
       solutionsData,
-      siteSettings,
     ] = await Promise.all([
       client.fetch(
         homepageQuery,
         {},
-        { next: { revalidate: 60 } }
+        {
+          next: {
+            revalidate: 60,
+          },
+        }
       ),
 
       client.fetch(
         servicesListQuery,
         {},
-        { next: { revalidate: 60 } }
+        {
+          next: {
+            revalidate: 60,
+          },
+        }
       ),
 
-      /*
-       * IMPORTANT:
-       * Fetch actual Industry documents directly.
-       * This means the homepage does not depend only on
-       * homepage.industriesSection.items references.
-       */
       client.fetch(
         industriesListQuery,
         {},
-        { next: { revalidate: 60 } }
+        {
+          next: {
+            revalidate: 60,
+          },
+        }
       ),
 
-      /*
-       * IMPORTANT:
-       * Fetch actual Solution documents directly.
-       * This prevents the hardcoded Solutions fallback
-       * from being shown when homepage references are empty.
-       */
       client.fetch(
         solutionsListQuery,
         {},
-        { next: { revalidate: 60 } }
-      ),
-
-      client.fetch(
-        siteSettingsQuery,
-        {},
-        { next: { revalidate: 60 } }
+        {
+          next: {
+            revalidate: 60,
+          },
+        }
       ),
     ]);
 
@@ -185,24 +234,19 @@ async function getHomepageData() {
         ? servicesData
         : [],
 
-      /*
-       * These are the REAL Sanity Industry documents.
-       */
       industries: Array.isArray(industriesData)
         ? industriesData
         : [],
 
-      /*
-       * These are the REAL Sanity Solution documents.
-       */
       solutions: Array.isArray(solutionsData)
         ? solutionsData
         : [],
-
-      siteSettings: siteSettings || null,
     };
   } catch (error) {
-    console.error("Sanity homepage fetch failed:", error);
+    console.error(
+      "Sanity homepage fetch failed:",
+      error
+    );
 
     return null;
   }
@@ -220,23 +264,28 @@ export default async function HomePage() {
   ======================================================= */
 
   const stats =
-    Array.isArray(data?.stats) && data.stats.length > 0
+    Array.isArray(data?.stats) &&
+    data.stats.length > 0
       ? data.stats
       : fallbackStats;
 
   const services =
-    Array.isArray(data?.services) && data.services.length > 0
+    Array.isArray(data?.services) &&
+    data.services.length > 0
       ? data.services
       : fallbackServices;
 
   const expertise =
-    data?.expertise || fallbackExpertise;
+    data?.expertise ||
+    fallbackExpertise;
 
   const whyChooseUs =
-    data?.whyChooseUs || fallbackWhyChooseUs;
+    data?.whyChooseUs ||
+    fallbackWhyChooseUs;
 
   const finalCta =
-    data?.finalCta || fallbackFinalCta;
+    data?.finalCta ||
+    fallbackFinalCta;
 
   const marketingGrid =
     Array.isArray(data?.marketingGrid)
@@ -244,73 +293,61 @@ export default async function HomePage() {
       : [];
 
   const partnersMarquee =
-    data?.partnersMarquee || null;
+    data?.partnersMarquee ||
+    null;
 
   /* =======================================================
      REAL INDUSTRIES
-     
-     Priority:
-     1. Real documents fetched from Sanity
-     2. Existing homepage references as secondary fallback
-     3. Empty array
   ======================================================= */
 
   const realIndustries =
     Array.isArray(data?.industries) &&
     data.industries.length > 0
       ? data.industries
-      : Array.isArray(data?.industriesSection?.items)
+      : Array.isArray(
+          data?.industriesSection?.items
+        )
         ? data.industriesSection.items
         : [];
 
+  /*
+   * Keep the section configuration from Sanity,
+   * but replace its items with the actual Industry
+   * documents fetched above.
+   */
   const industriesSection = {
     ...(data?.industriesSection || {}),
 
-    /*
-     * Force the UI to receive actual Industry documents.
-     */
     items: realIndustries,
   };
 
   /* =======================================================
      REAL SOLUTIONS
-     
-     Priority:
-     1. Real documents fetched from Sanity
-     2. Existing homepage references as secondary fallback
-     3. Empty array
-     
-     This is what stops:
-       Shopify Replatforming
-       ERP & OMS Integration
-       Headless Commerce
-       B2B Ordering Portals
-     
-     from appearing unless they actually exist in Sanity.
   ======================================================= */
 
   const realSolutions =
     Array.isArray(data?.solutions) &&
     data.solutions.length > 0
       ? data.solutions
-      : Array.isArray(data?.solutionsSection?.items)
+      : Array.isArray(
+          data?.solutionsSection?.items
+        )
         ? data.solutionsSection.items
         : [];
 
+  /*
+   * Keep the section configuration from Sanity,
+   * but replace its items with the actual Solution
+   * documents fetched above.
+   */
   const solutionsSection = {
     ...(data?.solutionsSection || {}),
 
-    /*
-     * Force the UI to receive actual Solution documents.
-     */
     items: realSolutions,
   };
 
   /* =======================================================
      DEBUG
-     
-     Temporarily useful while checking Sanity.
-     Remove later if you want.
   ======================================================= */
 
   if (process.env.NODE_ENV !== "production") {
@@ -348,15 +385,21 @@ export default async function HomePage() {
         stats={stats}
         hero={data?.hero || {}}
         logo={data?.siteSettings?.headerLogo}
-        logoAlt={data?.siteSettings?.headerLogoAlt}
-        partnersMarquee={partnersMarquee}
+        logoAlt={
+          data?.siteSettings?.headerLogoAlt
+        }
+        partnersMarquee={
+          partnersMarquee
+        }
       />
 
       {/* =================================================
-          VENDORS (right after hero)
+          VENDORS
       ================================================= */}
 
-      <VendorsSection data={data?.vendorsSection} />
+      <VendorsSection
+        data={data?.vendorsSection}
+      />
 
       {/* =================================================
           UNIVERSAL SECTIONS
@@ -374,14 +417,18 @@ export default async function HomePage() {
           SERVICES
       ================================================= */}
 
-      <ServicesGrid services={services} />
+      <ServicesGrid
+        services={services}
+      />
 
       {/* =================================================
           WHY CHOOSE US
       ================================================= */}
 
       <ScrollReveal>
-        <WhyChooseUs data={whyChooseUs} />
+        <WhyChooseUs
+          data={whyChooseUs}
+        />
       </ScrollReveal>
 
       {/* =================================================
@@ -406,10 +453,6 @@ export default async function HomePage() {
 
       {/* =================================================
           INDUSTRIES
-          
-          IMPORTANT:
-          industriesSection.items now contains REAL
-          Sanity Industry documents.
       ================================================= */}
 
       <IndustriesSection
@@ -418,10 +461,6 @@ export default async function HomePage() {
 
       {/* =================================================
           SOLUTIONS
-          
-          IMPORTANT:
-          solutionsSection.items now contains REAL
-          Sanity Solution documents.
       ================================================= */}
 
       <SolutionsSection
