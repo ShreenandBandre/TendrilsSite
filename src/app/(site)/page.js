@@ -20,11 +20,6 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import Link from "next/link";
 import UniversalSections from "@/components/content/UniversalSections";
 
-/*
- * Keep homepage ISR.
- *
- * Sanity data is revalidated every 60 seconds.
- */
 export const revalidate = 60;
 
 /* =========================================================
@@ -81,20 +76,16 @@ const fallbackServices = [
 
 const fallbackExpertise = {
   title: "Our Strategic Expertise",
-
   subtitle:
     "Driven by purpose, engineered for the future of digital commerce.",
-
   items: [
     {
       heading: "Our Mission",
-
       description:
         "To collaborate and foster disruption with leading-edge solutions that ensure our clients' future readiness.",
     },
     {
       heading: "Our Vision",
-
       description:
         "To shape a bold new era of digital disruption, with quality, agility, and integrity at the core.",
     },
@@ -103,35 +94,26 @@ const fallbackExpertise = {
 
 const fallbackWhyChooseUs = {
   title: "Why Choose Tendrils?",
-
   subtitle:
     "We combine strategy, technology, and execution to create commerce systems built for long-term growth.",
-
   features: [
     {
       title: "Commerce Expertise",
-
       description:
         "Deep expertise across Shopify, digital commerce, and integrations.",
     },
-
     {
       title: "Built for Scale",
-
       description:
         "We design systems that evolve with your business.",
     },
-
     {
       title: "Connected Ecosystems",
-
       description:
         "From storefronts to ERP, CRM, PIM, and OMS.",
     },
-
     {
       title: "Long-Term Partnership",
-
       description:
         "Continuous optimisation, support, and strategic guidance.",
     },
@@ -140,13 +122,10 @@ const fallbackWhyChooseUs = {
 
 const fallbackFinalCta = {
   eyebrow: "Ready for the next stage?",
-
   title:
     "Build the trajectory your commerce deserves.",
-
   description:
     "Tell us where your commerce operation is today, where it needs to go, and what is holding it back.",
-
   cta: {
     label: "Book a Consultation",
     href: "/contact",
@@ -165,9 +144,6 @@ async function getHomepageData() {
       industriesData,
       solutionsData,
     ] = await Promise.all([
-      /*
-       * Main homepage CMS document
-       */
       client.fetch(
         homepageQuery,
         {},
@@ -178,9 +154,6 @@ async function getHomepageData() {
         }
       ),
 
-      /*
-       * Lightweight service list.
-       */
       client.fetch(
         servicesListQuery,
         {},
@@ -191,9 +164,6 @@ async function getHomepageData() {
         }
       ),
 
-      /*
-       * Lightweight industry list.
-       */
       client.fetch(
         industriesListQuery,
         {},
@@ -204,9 +174,6 @@ async function getHomepageData() {
         }
       ),
 
-      /*
-       * Lightweight solution list.
-       */
       client.fetch(
         solutionsListQuery,
         {},
@@ -218,37 +185,22 @@ async function getHomepageData() {
       ),
     ]);
 
-    /*
-     * Server-side debugging.
-     *
-     * These logs are intentionally small.
-     */
     if (process.env.NODE_ENV !== "production") {
+      console.log("========== SANITY HOMEPAGE ==========");
+      console.log("Homepage data:", homepageData);
       console.log(
-        "Sanity homepage loaded:",
-        !!homepageData
+        "Services:",
+        servicesData?.length
       );
-
       console.log(
-        "Sanity services:",
-        Array.isArray(servicesData)
-          ? servicesData.length
-          : 0
+        "Industries:",
+        industriesData?.length
       );
-
       console.log(
-        "Sanity industries:",
-        Array.isArray(industriesData)
-          ? industriesData.length
-          : 0
+        "Solutions:",
+        solutionsData?.length
       );
-
-      console.log(
-        "Sanity solutions:",
-        Array.isArray(solutionsData)
-          ? solutionsData.length
-          : 0
-      );
+      console.log("======================================");
     }
 
     return {
@@ -267,20 +219,12 @@ async function getHomepageData() {
         : [],
     };
   } catch (error) {
-    /*
-     * IMPORTANT:
-     *
-     * Do NOT silently return null.
-     *
-     * Previously this caused the whole homepage to fall back
-     * to hardcoded content whenever Sanity failed.
-     */
     console.error(
       "🔥 SANITY HOMEPAGE FETCH FAILED:",
       error
     );
 
-    throw error;
+    return null;
   }
 }
 
@@ -290,10 +234,6 @@ async function getHomepageData() {
 
 export default async function HomePage() {
   const data = await getHomepageData();
-
-  /* =======================================================
-     BASIC HOMEPAGE DATA
-  ======================================================= */
 
   const stats =
     Array.isArray(data?.stats) &&
@@ -308,22 +248,16 @@ export default async function HomePage() {
       : fallbackServices;
 
   const expertise =
-    data?.expertise &&
-    typeof data.expertise === "object"
-      ? data.expertise
-      : fallbackExpertise;
+    data?.expertise ||
+    fallbackExpertise;
 
   const whyChooseUs =
-    data?.whyChooseUs &&
-    typeof data.whyChooseUs === "object"
-      ? data.whyChooseUs
-      : fallbackWhyChooseUs;
+    data?.whyChooseUs ||
+    fallbackWhyChooseUs;
 
   const finalCta =
-    data?.finalCta &&
-    typeof data.finalCta === "object"
-      ? data.finalCta
-      : fallbackFinalCta;
+    data?.finalCta ||
+    fallbackFinalCta;
 
   const marketingGrid =
     Array.isArray(data?.marketingGrid)
@@ -331,7 +265,8 @@ export default async function HomePage() {
       : [];
 
   const partnersMarquee =
-    data?.partnersMarquee || null;
+    data?.partnersMarquee ||
+    null;
 
   /* =======================================================
      INDUSTRIES
@@ -341,7 +276,11 @@ export default async function HomePage() {
     Array.isArray(data?.industries) &&
     data.industries.length > 0
       ? data.industries
-      : [];
+      : Array.isArray(
+          data?.industriesSection?.items
+        )
+        ? data.industriesSection.items
+        : [];
 
   const industriesSection = {
     ...(data?.industriesSection || {}),
@@ -356,7 +295,11 @@ export default async function HomePage() {
     Array.isArray(data?.solutions) &&
     data.solutions.length > 0
       ? data.solutions
-      : [];
+      : Array.isArray(
+          data?.solutionsSection?.items
+        )
+        ? data.solutionsSection.items
+        : [];
 
   const solutionsSection = {
     ...(data?.solutionsSection || {}),
@@ -394,9 +337,7 @@ export default async function HomePage() {
   return (
     <main className="relative">
 
-      {/* =================================================
-          HERO
-      ================================================= */}
+      {/* HERO */}
 
       <DottedWorldHero
         stats={stats}
@@ -406,38 +347,29 @@ export default async function HomePage() {
         partnersMarquee={partnersMarquee}
       />
 
-      {/* =================================================
-          VENDORS
-      ================================================= */}
+      {/* VENDORS */}
 
       <VendorsSection
         data={data?.vendorsSection}
       />
 
-      {/* =================================================
-          UNIVERSAL SECTIONS
-      ================================================= */}
+      {/* UNIVERSAL SECTIONS */}
 
-      {Array.isArray(data?.sections) &&
-        data.sections.length > 0 && (
-          <ScrollReveal>
-            <UniversalSections
-              sections={data.sections}
-            />
-          </ScrollReveal>
-        )}
+      {data?.sections?.length > 0 && (
+        <ScrollReveal>
+          <UniversalSections
+            sections={data.sections}
+          />
+        </ScrollReveal>
+      )}
 
-      {/* =================================================
-          SERVICES
-      ================================================= */}
+      {/* SERVICES */}
 
       <ServicesGrid
         services={services}
       />
 
-      {/* =================================================
-          WHY CHOOSE US
-      ================================================= */}
+      {/* WHY CHOOSE US */}
 
       <ScrollReveal>
         <WhyChooseUs
@@ -445,9 +377,7 @@ export default async function HomePage() {
         />
       </ScrollReveal>
 
-      {/* =================================================
-          DIGITAL MARKETING
-      ================================================= */}
+      {/* DIGITAL MARKETING */}
 
       <ScrollReveal>
         <DigitalMarketingGrid
@@ -455,9 +385,7 @@ export default async function HomePage() {
         />
       </ScrollReveal>
 
-      {/* =================================================
-          EXPERTISE
-      ================================================= */}
+      {/* EXPERTISE */}
 
       <ScrollReveal>
         <ExpertiseSection
@@ -465,25 +393,19 @@ export default async function HomePage() {
         />
       </ScrollReveal>
 
-      {/* =================================================
-          INDUSTRIES
-      ================================================= */}
+      {/* INDUSTRIES */}
 
       <IndustriesSection
         data={industriesSection}
       />
 
-      {/* =================================================
-          SOLUTIONS
-      ================================================= */}
+      {/* SOLUTIONS */}
 
       <SolutionsSection
         data={solutionsSection}
       />
 
-      {/* =================================================
-          FINAL CTA
-      ================================================= */}
+      {/* FINAL CTA */}
 
       <ScrollReveal>
         <section className="bg-[#111111] px-6 py-24 text-center text-[#f7f2e8]">

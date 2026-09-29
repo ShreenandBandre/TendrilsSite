@@ -373,17 +373,18 @@ export const homepageQuery = groq`
      * constructing a new projection from coalesce().
      */
 
-    "siteSettings": *[
-      _type == "siteSettings"
-    ][0]{
-      headerLogoDark ${imageProjection},
-      headerLogoLight ${imageProjection},
-      headerLogoAlt,
+    "siteSettings": *[_type == "siteSettings"][0]{
+      "headerLogo": coalesce(
+        headerLogoDark,
+        headerLogoLight
+      ),
 
       "headerLogoUrl": coalesce(
         headerLogoDark.asset->url,
         headerLogoLight.asset->url
-      )
+      ),
+
+      headerLogoAlt
     }
   }
 `;
@@ -1518,11 +1519,6 @@ export const caseStudyBySlugQuery = groq`
 
 export const siteSettingsQuery = groq`
   *[_type == "siteSettings"][0]{
-
-    headerLogoDark ${imageProjection},
-
-    headerLogoLight ${imageProjection},
-
     "headerLogo": coalesce(
       headerLogoDark,
       headerLogoLight
@@ -1532,6 +1528,9 @@ export const siteSettingsQuery = groq`
       headerLogoDark.asset->url,
       headerLogoLight.asset->url
     ),
+
+    headerLogoDark ${imageProjection},
+    headerLogoLight ${imageProjection},
 
     headerLogoAlt,
 
